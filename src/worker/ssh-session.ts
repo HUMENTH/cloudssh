@@ -54,6 +54,7 @@ export class SSHSession {
 
   private seqNumSend: number = 0;
   private sessionID: Uint8Array | null = null;
+  private sendMutex: Promise<void> = Promise.resolve();
 
   private kexInitLocal: Uint8Array | null = null;
   private kexInitRemote: Uint8Array | null = null;
@@ -674,17 +675,19 @@ export class SSHSession {
     if (this.state !== 'ready') return;
 
     if (typeof data === 'string') {
-      try {
-        const msg = JSON.parse(data);
-        if (msg.type === 'resize') {
-          await this.handleResize(msg.cols, msg.rows);
-          return;
-        }
-      } catch {
-        const encoded = new TextEncoder().encode(data);
-        const channelData = this.channel.buildChannelData(encoded);
-        await this.sendEncrypted(channelData);
+      if (data.startsWith('{"type":"resize"')) {
+        try {
+          const msg = JSON.parse(data);
+          if (msg.type === 'resize') {
+            await this.handleResize(msg.cols, msg.rows);
+            return;
+          }
+        } catch {}
       }
+      
+      const encoded = new TextEncoder().encode(data);
+      const channelData = this.channel.buildChannelData(encoded);
+      await this.sendEncrypted(channelData);
     } else {
       const channelData = this.channel.buildChannelData(new Uint8Array(data));
       await this.sendEncrypted(channelData);
@@ -697,17 +700,22 @@ export class SSHSession {
   }
 
   private async sendEncrypted(payload: Uint8Array): Promise<void> {
-    if (!this.encryptCipher) {
-      throw new Error('Encryption not initialized');
-    }
+    const operation = this.sendMutex.then(async () => {
+      if (!this.encryptCipher) {
+        throw new Error('Encryption not initialized');
+      }
 
-    const encrypted = await SSHPacketBuilder.build(
-      payload, 16,
-      (data, seq, aad) => this.encryptCipher!.encrypt(data, seq, aad),
-      this.seqNumSend++,
-      true
-    );
-    await this.writeSocket(encrypted);
+      const encrypted = await SSHPacketBuilder.build(
+        payload, 16,
+        (data, seq, aad) => this.encryptCipher!.encrypt(data, seq, aad),
+        this.seqNumSend++,
+        true
+      );
+      await this.writeSocket(encrypted);
+    });
+    
+    this.sendMutex = operation.catch(() => {}); // prevent unhandled rejections from blocking the queue
+    await operation;
   }
 
   private sendStatus(message: string): void {
