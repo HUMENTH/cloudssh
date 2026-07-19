@@ -44,7 +44,7 @@ async function decryptCredentials(stored: string): Promise<{ host: string; port:
 }
 
 export interface ConnectionFormOptions {
-  /** 获取 TabManager 实例 */
+  /** Get the TabManager instance */
   getTabManager: () => TabManager;
 }
 
@@ -75,7 +75,7 @@ export class ConnectionForm {
       if (this.turnstileEnabled && this.turnstileSitekey) {
         this.renderTurnstile();
       }
-      // 渲染 GitHub 登录按钮（仅当 OAuth 已配置时）
+      // Render the GitHub login button (only when OAuth is set up)
       if (config.githubAuthEnabled) {
         this.renderGitHubLoginButton();
       }
@@ -179,11 +179,11 @@ export class ConnectionForm {
             </div>
           </div>
           <div id="auth-key-section" style="display:none;">
-            <textarea id="private-key" class="terminal-input text-[11px] w-full" rows="5" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...粘贴 Ed25519/RSA/ECDSA 私钥内容...&#10;-----END OPENSSH PRIVATE KEY-----" style="resize:vertical;border:1px solid var(--border-strong);padding:8px;"></textarea>
+            <textarea id="private-key" class="terminal-input text-[11px] w-full" rows="5" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...Paste Ed25519/RSA/ECDSA Private key content...&#10;-----END OPENSSH PRIVATE KEY-----" style="resize:vertical;border:1px solid var(--border-strong);padding:8px;"></textarea>
             <div class="flex items-center gap-2 mt-2">
               <label for="private-key-file" class="text-[11px] text-muted hover:text-primary cursor-pointer flex items-center gap-1 border border-dim px-2 py-1 hover:border-[var(--accent)] transition-all">
                 <span class="material-symbols-outlined" style="font-size: 14px;">upload_file</span>
-                选择密钥文件
+                Select key file
               </label>
               <input type="file" id="private-key-file" accept=".pem,.key,.txt,.pub" class="hidden">
               <span id="file-name" class="text-[10px] text-muted truncate"></span>
@@ -194,9 +194,9 @@ export class ConnectionForm {
           <div id="turnstile-widget" class="flex justify-center"></div>
         </div>
         <div>
-          <label class="block text-xs font-bold tracking-[0.1em] text-muted mb-2">REGION_HINT <span class="text-[9px] opacity-60">(可选：请选择距离目标SSH服务器最近的节点)</span></label>
+          <label class="block text-xs font-bold tracking-[0.1em] text-muted mb-2">REGION_HINT <span class="text-[9px] opacity-60">(Optional: Please choose the node closest to the target SSH server)</span></label>
           <select id="anon-region" class="terminal-input text-[13px] cursor-pointer" style="border:1px solid var(--border-strong);border-bottom:1px solid var(--border-strong);padding:6px 8px;">
-            <option value="">自动</option>
+            <option value="">Automatic</option>
           </select>
         </div>
         <div class="flex items-center gap-2 mt-2">
@@ -231,7 +231,7 @@ export class ConnectionForm {
       if (e.key === 'Enter') this.handleConnect();
     });
 
-    // 填充区域下拉选项（自动选项已存在于 HTML，populateRegionSelect 会完整替换）
+    // Populate the region dropdown (the options already exist in HTML, populateRegionSelect will completely replace them)
     const anonRegionSelect = document.getElementById('anon-region') as HTMLSelectElement | null;
     if (anonRegionSelect) {
       populateRegionSelect(anonRegionSelect, '');
@@ -261,7 +261,7 @@ export class ConnectionForm {
           fileNameSpan.textContent = file.name;
         }
       } catch (error) {
-        alert('读取密钥文件失败: ' + (error instanceof Error ? error.message : '未知错误'));
+        alert('Failed to read the key file: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
 
       // Reset file input
@@ -324,13 +324,13 @@ export class ConnectionForm {
         </button>
       `;
 
-      // 点击填入
+      // Click to fill in
       itemEl.addEventListener('click', (e) => {
         if ((e.target as HTMLElement).closest('.delete-history-btn')) return;
         this.fillConnection(item);
       });
 
-      // 删除单条
+      // Delete single item
       itemEl.querySelector('.delete-history-btn')!.addEventListener('click', (e) => {
         e.stopPropagation();
         this.deleteConnection(index);
@@ -345,7 +345,7 @@ export class ConnectionForm {
     (document.getElementById('port') as HTMLInputElement).value = (item.port || 22).toString();
     (document.getElementById('username') as HTMLInputElement).value = item.username || '';
 
-    // 还原区域下拉（从 recent connection 的 region 字段；老条目无此字段则默认 Auto）
+    // Restore the region dropdown (from the region field of recent connections; old entries without this field default to Auto)
     const anonRegionSelect = document.getElementById('anon-region') as HTMLSelectElement | null;
     if (anonRegionSelect) {
       anonRegionSelect.value = item.region || '';
@@ -399,7 +399,7 @@ export class ConnectionForm {
       recent = [];
     }
 
-    // 兼容性迁移：如果无 recent_connections 但存在老版单条 cloudssh_cred，则自动将其迁移并存入历史记录
+    // Compatibility migration: If there are no recent_connections but an old single cloudssh_cred exists, it will be automatically migrated and stored in the history.
     const oldCred = localStorage.getItem('cloudssh_cred');
     if (recent.length === 0 && oldCred) {
       const cred = await decryptCredentials(oldCred);
@@ -415,15 +415,15 @@ export class ConnectionForm {
         };
         recent.push(item);
         localStorage.setItem('cloudssh_recent_connections', JSON.stringify(recent));
-        // 清理老旧单项
+        // Clean up old items
         localStorage.removeItem('cloudssh_cred');
       }
     }
 
-    // 渲染历史列表
+    // Render history list
     this.renderRecentConnections();
 
-    // 默认自动填入最近使用的一条（即第一条）
+    // By default, it automatically fills in the most recently used one (i.e., the first one)
     if (recent.length > 0) {
       this.fillConnection(recent[0]);
     }
@@ -439,32 +439,32 @@ export class ConnectionForm {
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const privateKey = (document.getElementById('private-key') as HTMLTextAreaElement).value;
     const remember = (document.getElementById('remember-me') as HTMLInputElement).checked;
-    // 匿名路径区域选择（仅作为 manual override；系统不会对此路径自动推断）
+    // Anonymous path area selection (for manual override only; the system won't automatically infer this path)
     const anonRegionSelect = document.getElementById('anon-region') as HTMLSelectElement | null;
     const regionValue = anonRegionSelect ? anonRegionSelect.value : '';
 
     if (!host || !username) {
-      alert('请填写主机名和用户名');
+      alert('Please enter the hostname and username');
       return;
     }
 
     if (this.authMode === 'password' && !password) {
-      alert('请输入密码');
+      alert('Please enter your password');
       return;
     }
 
     if (this.authMode === 'key' && !privateKey) {
-      alert('请粘贴私钥内容');
+      alert('Please paste the private key content');
       return;
     }
 
     // Check Turnstile if enabled
     if (this.turnstileEnabled && !this.turnstileVerified) {
-      alert('请完成人机验证');
+      alert('Please complete the human verification');
       return;
     }
 
-    // 保存连接历史与凭据
+    // Save connection history and credentials
     let encryptedCred: string | undefined = undefined;
     if (remember) {
       encryptedCred = await encryptCredentials({
@@ -477,7 +477,7 @@ export class ConnectionForm {
       });
     }
 
-    // 更新最近连接列表
+    // Update recent connections list
     const recentRaw = localStorage.getItem('cloudssh_recent_connections');
     let recent: any[] = [];
     try {
@@ -493,28 +493,28 @@ export class ConnectionForm {
       username,
       authMethod: this.authMode === 'key' ? 'publickey' : 'password',
       timestamp: Date.now(),
-      ...(regionValue ? { region: regionValue } : {}),   // 区域偏好持久化到 recent
+      ...(regionValue ? { region: regionValue } : {}),   // Regional preferences saved to recent
       ...(encryptedCred ? { encryptedCred } : {}),
     };
 
-    // 去重：如果已有相同 id 记录，先删除
+    // Remove duplicates: if there's already a record with the same ID, delete it first
     recent = recent.filter(r => r.id !== id);
-    // 插入头部
+    // Insert head
     recent.unshift(newRecord);
-    // 限制最近 5 条
+    // Limit to the last 5
     if (recent.length > 5) {
       recent = recent.slice(0, 5);
     }
     localStorage.setItem('cloudssh_recent_connections', JSON.stringify(recent));
 
-    // 重新渲染历史列表
+    // Rerender history list
     this.renderRecentConnections();
 
-    // 通过 TabManager 创建新标签并切换到终端视图
+    // Create a new tab through TabManager and switch to the terminal view
     const tm = this.options.getTabManager();
     const displayLabel = `${username}@${host}`;
 
-    // 切换到终端视图
+    // Switch to terminal view
     document.getElementById('auth-section')!.classList.add('hidden');
     document.getElementById('terminal-section')!.classList.remove('hidden');
     document.getElementById('terminal-section')!.classList.add('flex');
@@ -525,7 +525,7 @@ export class ConnectionForm {
     terminal.mount();
 
     try {
-      // 加载已知主机指纹（TOFU 验证）
+      // Load known host fingerprints (TOFU verification)
       const expectedFingerprint = await loadKnownFingerprint(host, port);
 
       await terminal.connect({
@@ -539,7 +539,7 @@ export class ConnectionForm {
         locationHint: regionValue || undefined,
       });
     } catch (error) {
-      // 连接失败时关闭该标签
+      // Close this tab if the connection fails
       tm.closeTab(tab.id);
       document.getElementById('status-text')!.innerHTML = '<span class="w-2 h-2 bg-surface-dot inline-block"></span> STATUS: OFFLINE';
     }
