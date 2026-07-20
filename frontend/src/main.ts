@@ -5,14 +5,14 @@ import { ServerList } from './server-list';
 import { TabManager } from './tab-manager';
 import { AIConfigPanel } from './ai-config';
 
-// ==================== Global State ====================
+// ==================== 全局状态 ====================
 
 let tabManager: TabManager | null = null;
 let connectionForm: ConnectionForm | null = null;
 let serverList: ServerList | null = null;
 let isLoggedIn = false;
 
-/** Get or initialize TabManager singleton */
+/** 获取或初始化 TabManager 单例 */
 function getTabManager(): TabManager {
   if (!tabManager) {
     tabManager = new TabManager('tab-bar', 'terminal-area');
@@ -21,23 +21,23 @@ function getTabManager(): TabManager {
     });
     tabManager.setLoggedIn(isLoggedIn);
 
-    // Bind new-tab-btn
+    // 绑定 new-tab-btn
     bindNewTabButton();
   }
   return tabManager;
 }
 
 function bindNewTabButton(): void {
-  // Use event delegation since TabManager.renderTabBar() will rebuild the button
+  // 使用事件委托，因为 TabManager.renderTabBar() 会重建按钮
   document.getElementById('tab-bar')?.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest('#new-tab-btn');
     if (!btn) return;
-    // Click + button: go back to connection page to create new connection
+    // 点击 + 按钮：回到连接页面以创建新连接
     showConnectionPage();
   });
 }
 
-// ==================== Standalone Terminal Tab Mode ====================
+// ==================== 独立终端标签页模式 ====================
 
 function isTerminalTab(): boolean {
   const params = new URLSearchParams(window.location.search);
@@ -75,7 +75,7 @@ function initTerminalTab(): void {
   document.getElementById('terminal-section')!.classList.add('flex');
   document.body.classList.add('terminal-active');
 
-  // Hide tab bar (URL direct connect mode has only one tab, no need for tab bar)
+  // 隐藏标签栏（URL 直连模式只有一个标签，不需要标签栏）
   const tabBar = document.getElementById('tab-bar');
   if (tabBar) tabBar.style.display = 'none';
 
@@ -88,7 +88,7 @@ function initTerminalTab(): void {
   tab.terminal.connectWithWebSocket(ws, hostInfo);
 }
 
-// ==================== Page Navigation ====================
+// ==================== 页面切换 ====================
 
 function showAuthSection(): void {
   document.getElementById('auth-section')!.classList.remove('hidden');
@@ -121,7 +121,7 @@ function showUserSpace(user: { id: number; github_id: number; username: string; 
 
   serverList = new ServerList(
     user,
-    // onLogout callback
+    // onLogout 回调
     () => {
       isLoggedIn = false;
       serverList = null;
@@ -130,17 +130,17 @@ function showUserSpace(user: { id: number; github_id: number; username: string; 
       }
       showAuthSection();
     },
-    // onConnect callback - create new tab in current page
+    // onConnect 回调 — 在当前页面创建新标签
     (wsUrl: string, serverName: string, hostInfo?: { host: string; port: number }) => {
       showTerminalFromServer(wsUrl, serverName, hostInfo);
     }
   );
 }
 
-/** Show connection page (anonymous → auth-form, logged-in → server list) */
+/** 显示连接页面（匿名 → auth-form，登录 → 服务器列表） */
 function showConnectionPage(): void {
-  // If there are still active tabs, no need to hide terminal area; just overlay the connection page
-  // But for simplicity, we switch back to the corresponding entry page first
+  // 如果还有活跃标签，不需要隐藏终端区域；只需要覆盖显示连接页面
+  // 但为了简单起见，我们先切回对应的入口页面
   if (isLoggedIn) {
     document.getElementById('terminal-section')!.classList.add('hidden');
     document.getElementById('terminal-section')!.classList.remove('flex');
@@ -216,13 +216,13 @@ function showTerminalFromServer(wsUrl: string, serverName: string, hostInfo?: { 
 
   terminal.mount();
 
-  // Establish connection via wsUrl (contains one-time-token)
+  // 通过 wsUrl（含 one-time-token）建立连接
   const ws = new WebSocket(wsUrl);
   ws.binaryType = 'arraybuffer';
   terminal.connectWithWebSocket(ws, hostInfo);
 }
 
-// ==================== Disconnect Handling ====================
+// ==================== 断开连接处理 ====================
 
 document.getElementById('disconnect-btn')?.addEventListener('click', () => {
   const tm = tabManager;
@@ -236,21 +236,21 @@ document.getElementById('disconnect-btn')?.addEventListener('click', () => {
   tm.closeActiveTab();
 });
 
-// ==================== SFTP Panel ====================
+// ==================== SFTP 面板 ====================
 
 document.getElementById('sftp-toggle-btn')?.addEventListener('click', () => {
   const tab = tabManager?.getActiveTab();
   if (!tab) return;
 
   if (!tab.sftpPanel) {
-    // SFTP panel is initialized by TabManager's sessionReady callback
-    // If not yet initialized, SSH is not ready
+    // SFTP 面板由 TabManager 的 sessionReady 回调初始化
+    // 如果还没有初始化，说明 SSH 还没就绪
     return;
   }
   tab.sftpPanel.toggle();
 });
 
-// ==================== AI Agent Panel ====================
+// ==================== AI Agent 面板 ====================
 
 const aiConfigPanel = new AIConfigPanel();
 
@@ -260,24 +260,24 @@ document.getElementById('agent-toggle-btn')?.addEventListener('click', () => {
   tab.agentPanel.toggle();
 });
 
-/** Show AI config panel (called from server-list) */
+/** 显示 AI 配置面板（从 server-list 调用） */
 export function showAIConfig(): void {
   aiConfigPanel.show();
 }
 
-// ==================== Terminal Search ====================
+// ==================== 终端搜索 ====================
 
 document.getElementById('search-btn')?.addEventListener('click', () => {
   tabManager?.getActiveTab()?.terminal.toggleSearch();
 });
 
-// ==================== Export Terminal Log ====================
+// ==================== 导出终端日志 ====================
 
 document.getElementById('export-btn')?.addEventListener('click', () => {
   tabManager?.getActiveTab()?.terminal.exportToFile();
 });
 
-// ==================== Theme Switching ====================
+// ==================== 主题切换 ====================
 
 const CUSTOM_THEME_VALUE = '__custom__';
 const themeSelector = document.getElementById('theme-selector') as HTMLSelectElement | null;
@@ -313,7 +313,7 @@ function ensureCustomOption(): void {
   }
 }
 
-// ==================== Theme Import ====================
+// ==================== 主题导入 ====================
 
 const importThemeBtn = document.getElementById('import-theme-btn');
 const importThemeInput = document.getElementById('import-theme-input') as HTMLInputElement | null;
@@ -331,44 +331,44 @@ importThemeInput?.addEventListener('change', async (e) => {
     try {
       const data = JSON.parse(ev.target!.result as string);
       if (!data.ui || typeof data.ui !== 'object') {
-        alert('Invalid theme file: missing "ui" field');
+        alert('无效的主题文件：缺少 "ui" 字段');
         return;
       }
 
-      // Save to localStorage
+      // 保存到 localStorage
       localStorage.setItem('cloudssh_imported_theme', JSON.stringify(data));
 
-      // Try to save to cloud
+      // 尝试保存到云端
       try {
         await fetch('/api/user/theme', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ theme_data: data }),
         });
-      } catch { /* Not logged in or network error, ignore */ }
+      } catch { /* 未登录或网络错误，忽略 */ }
 
-      // Add Custom option and select it
+      // 添加 Custom 选项并选中
       ensureCustomOption();
       if (themeSelector) themeSelector.value = CUSTOM_THEME_VALUE;
       localStorage.setItem('cloudssh_theme_selection', CUSTOM_THEME_VALUE);
 
-      // Apply theme directly without refreshing page (to avoid disconnecting WebSocket)
+      // 直接应用主题，不刷新页面（避免断开 WebSocket）
       getThemeTerminal()?.applyImportedTheme(data);
     } catch {
-      alert('Invalid JSON file');
+      alert('无效的 JSON 文件');
     }
   };
   reader.readAsText(file);
   importThemeInput.value = '';
 });
 
-// ==================== Theme Restore ====================
+// ==================== 主题恢复 ====================
 
-/** Restore theme (called during init, no terminal instance yet, only set UI variables) */
+/** 恢复主题（在 init 时调用，此时还没有终端实例，只设置 UI 变量） */
 async function restoreTheme(): Promise<void> {
   const selection = localStorage.getItem('cloudssh_theme_selection');
 
-  // Try to load custom theme from cloud
+  // 尝试从云端加载自定义主题
   let cloudTheme: Record<string, unknown> | null = null;
   try {
     const res = await fetch('/api/user/theme');
@@ -376,14 +376,14 @@ async function restoreTheme(): Promise<void> {
       const { theme } = await res.json() as { theme: Record<string, unknown> | null };
       if (theme) {
         cloudTheme = theme;
-        // Sync to localStorage
+        // 同步到 localStorage
         localStorage.setItem('cloudssh_imported_theme', JSON.stringify(theme));
         ensureCustomOption();
       }
     }
-  } catch { /* Not logged in, ignore */ }
+  } catch { /* 未登录，忽略 */ }
 
-  // If no cloud theme but localStorage has one, also add Custom option
+  // 如果云端没有但 localStorage 有，也添加 Custom 选项
   if (!cloudTheme) {
     const localRaw = localStorage.getItem('cloudssh_imported_theme');
     if (localRaw) {
@@ -396,13 +396,13 @@ async function restoreTheme(): Promise<void> {
     }
   }
 
-  // Restore selection: apply UI variables (terminal theme is applied when creating tab)
+  // 恢复选择：应用 UI 变量（终端主题在创建标签时应用）
   if (selection === CUSTOM_THEME_VALUE) {
     const raw = localStorage.getItem('cloudssh_imported_theme');
     if (raw) {
       try {
         const data = JSON.parse(raw);
-        // Apply UI variables
+        // 应用 UI 变量
         if (data.ui) {
           const root = document.documentElement;
           Object.entries(data.ui).forEach(([prop, val]) => {
@@ -416,7 +416,7 @@ async function restoreTheme(): Promise<void> {
   }
 
   if (selection && THEMES[selection as keyof typeof THEMES]) {
-    // Apply UI variables (no terminal instance needed)
+    // 应用 UI 变量（不需要终端实例）
     const { UI_THEMES } = await import('./terminal');
     const uiVars = UI_THEMES[selection as keyof typeof THEMES];
     if (uiVars) {
@@ -429,7 +429,7 @@ async function restoreTheme(): Promise<void> {
     return;
   }
 
-  // Default theme: only set UI variables
+  // 默认主题：只设置 UI 变量
   const { UI_THEMES } = await import('./terminal');
   const uiVars = UI_THEMES.cyberpunk;
   if (uiVars) {
@@ -441,24 +441,24 @@ async function restoreTheme(): Promise<void> {
   if (themeSelector) themeSelector.value = 'cyberpunk';
 }
 
-// ==================== Initialization ====================
+// ==================== 初始化 ====================
 
 async function init(): Promise<void> {
   await restoreTheme();
-  // Set copyright year
+  // 设置版权年份
   const copyrightYearSpan = document.getElementById('copyright-year');
   if (copyrightYearSpan) {
     copyrightYearSpan.textContent = new Date().getFullYear().toString();
   }
 
-  // Standalone terminal tab mode: URL contains wsUrl parameter
+  // 独立终端标签页模式：URL 包含 wsUrl 参数
   if (isTerminalTab()) {
     initTerminalTab();
     return;
   }
 
   try {
-    // Check if logged in
+    // 检查是否已登录
     const meRes = await fetch('/api/auth/me');
     if (meRes.ok) {
       const user = await meRes.json();
@@ -466,14 +466,14 @@ async function init(): Promise<void> {
       return;
     }
   } catch {
-    // /api/auth/me failed, continue to show anonymous connection form
+    // /api/auth/me 失败，继续显示匿名连接表单
   }
 
-  // Not logged in → show anonymous connection form
+  // 未登录 → 显示匿名连接表单
   showAuthSection();
 }
 
-// Export for use by auth-form and server-list
+// 导出供 auth-form 和 server-list 使用
 export { getTabManager, showTerminalWithNewTab, validateWsUrl };
 
 init();
