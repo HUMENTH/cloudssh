@@ -1,6 +1,7 @@
 import { loadKnownFingerprint } from './terminal';
 import type { TabManager } from './tab-manager';
 import { populateRegionSelect, regionLabel } from './regions';
+import { notify } from './ui-feedback';
 // --- Credential encryption helpers ---
 async function deriveKey(salt: Uint8Array): Promise<CryptoKey> {
   const raw = new TextEncoder().encode(window.location.origin + ':cloudssh');
@@ -545,4 +546,3 @@ export class ConnectionForm {
     }
   }
 }
-

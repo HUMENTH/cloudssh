@@ -4,6 +4,7 @@ import { ConnectionForm } from './auth-form';
 import { ServerList } from './server-list';
 import { TabManager } from './tab-manager';
 import { AIConfigPanel } from './ai-config';
+import { notify } from './ui-feedback';
 
 // ==================== Global State ====================
 
@@ -204,7 +205,10 @@ function showTerminalWithNewTab(
 
 function showTerminalFromServer(wsUrl: string, serverName: string, hostInfo?: { host: string; port: number }): void {
   if (!validateWsUrl(wsUrl)) {
-    alert('Invalid WebSocket URL');
+    notify('服务器返回了无效或不受信任的 WebSocket 地址。', {
+      title: '无法建立连接',
+      variant: 'danger',
+    });
     return;
   }
 
@@ -354,6 +358,7 @@ importThemeInput?.addEventListener('change', async (e) => {
 
       // Apply theme directly without refreshing page (to avoid disconnecting WebSocket)
       getThemeTerminal()?.applyImportedTheme(data);
+      notify('主题已导入并应用。', { variant: 'success' });
     } catch {
       alert('Invalid JSON file');
     }
